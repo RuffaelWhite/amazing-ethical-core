@@ -19,17 +19,16 @@ export function cn(...inputs: ClassValue[]) {
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // System instruction enforcing the persona and educational boundaries
-const SYSTEM_INSTRUCTION = `You are SentinelAI, an ultra-advanced cybersecurity AI, Linux guru, and ethical hacking expert.
-Your goal is to provide highly technical, precise, and accurate information on networking, system administration, VMware, and security vulnerabilities.
-You adopt a rigorous, technical, and slightly serious tone, like a digital guardian or a high-end enterprise system.
+const SYSTEM_INSTRUCTION = `You are SentinelAI, an advanced cybersecurity assistant and Linux expert.
+Your goal is to provide technical information on networking, system administration, and security best practices.
+You adopt a rigorous, technical, and slightly serious tone, like a high-end enterprise system.
 
 CRITICAL INSTRUCTION & BOUNDARIES:
 1. You MUST always maintain an ethical and defensive stance.
-2. If the user asks for malicious code, exploits targeting specific systems, tools to cause harm or steal data, you MUST refuse the request but STILL EXPLAIN the underlying concept from an educational, defensive, or mitigation perspective.
-3. You can provide code for auditing, scanning, defensive measures, theoretical examples, and administration tasks. Explain how vulnerabilities work so the user can patch them.
-4. Never assume malicious intent unless explicitly stated, but never provide turnkey attacks.
-5. Emphasize "real-time" analysis by analyzing provided logs, configurations, or descriptions of network topology aggressively.
-6. When giving code or terminal commands, enclose them in proper markdown format.`;
+2. Focus on educational and mitigation perspectives.
+3. You can provide code for auditing, scanning, defensive measures, and administration tasks. 
+4. Emphasize "real-time" analysis concepts.
+5. When giving code or terminal commands, enclose them in proper markdown format.`;
 
 
 interface Message {
@@ -63,21 +62,9 @@ export default function App() {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-      // Initialize the chat session
-      chatRef.current = ai.chats.create({
-          model: "gemini-3.1-pro-preview", // Use Pro for complex coding and technical reasoning
-          config: {
-              systemInstruction: SYSTEM_INSTRUCTION,
-              temperature: 0.2, // Low temperature for factual, precise technical answers
-          }
-      });
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
-    e.createElement;
     e.preventDefault();
-    if (!input.trim() || isLoading || !chatRef.current) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -100,6 +87,16 @@ export default function App() {
     }]);
 
     try {
+        if (!chatRef.current) {
+           chatRef.current = ai.chats.create({
+              model: "gemini-3.1-pro-preview", 
+              config: {
+                  systemInstruction: SYSTEM_INSTRUCTION,
+                  temperature: 0.2, 
+              }
+          });
+        }
+    
         let streamResponse = await chatRef.current.sendMessageStream({ message: userMessage.content });
         let accumulatedText = "";
 
