@@ -89,7 +89,7 @@ export default function App() {
     try {
         if (!chatRef.current) {
            chatRef.current = ai.chats.create({
-              model: "gemini-3.1-pro-preview", 
+              model: "gemini-3-flash-preview", 
               config: {
                   systemInstruction: SYSTEM_INSTRUCTION,
                   temperature: 0.2, 
@@ -110,11 +110,19 @@ export default function App() {
                  );
              }
         }
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Error:", error);
+      chatRef.current = null; // Reset connection to allow fresh replay entirely
+      
+      let errorMessage = "ERROR 500: COMMUNICATION LINK SEVERED.\n\n" + (error?.message || "Unknown Error");
+      
+      if (error?.message?.includes("429") || error?.status === "RESOURCE_EXHAUSTED" || error?.message?.includes("quota")) {
+          errorMessage = "CRITICAL ERROR 429: SYSTEM QUOTA EXCEEDED.\n\nAPI limits reached for the current configuration. Please verify your GEMINI_API_KEY in the AI Studio settings or wait for rate limits to reset.";
+      }
+
       setMessages(currentMessages =>
           currentMessages.map(msg =>
-              msg.id === modelMessageId ? { ...msg, content: "ERROR: Communication link with main core severed. Please try again." } : msg
+              msg.id === modelMessageId ? { ...msg, content: errorMessage } : msg
           )
       );
     } finally {
